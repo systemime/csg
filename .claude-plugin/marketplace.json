@@ -1,0 +1,14 @@
+{
+  "name": "super-agent",
+  "description": "DeepSeek Super-agent 协议插件：Router/Worker 双层架构在 Claude Code 中的实现，适合多任务并行与事件驱动开发。",
+  "owner": {
+    "name": "OwO"
+  },
+  "plugins": [
+    {
+      "name": "super-agent",
+      "source": "./",
+      "description": "DeepSeek Super-agent Router/Worker 协议：Router 只路由，Worker 按工单隔离执行，台账跟踪、Watchdog、通信闸门。"
+    }
+  ]
+}
