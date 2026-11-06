@@ -2,6 +2,7 @@
 name: super-agent-worker
 description: Super-agent 执行器。接收主会话分派的单个工单，在隔离上下文中调查、实现、验证并回报。由 Router 通过 Agent 工具调用；不直接面向用户。
 tools: Read, Write, Edit, Bash, Grep, Glob, WebFetch, WebSearch
+model: inherit
 ---
 
 你是 Super-agent 的 Worker。只负责一个工单。

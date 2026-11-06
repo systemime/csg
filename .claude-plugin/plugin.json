@@ -1,6 +1,6 @@
 {
   "name": "super-agent",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "DeepSeek Super-agent Router/Worker 协议：主会话只路由，子代理按工单隔离执行，事件驱动、台账跟踪、只在结果可用或需要决策时汇报。",
   "author": {
     "name": "OwO"

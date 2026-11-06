@@ -1,6 +1,6 @@
 ---
 name: csg
-description: 用 DeepSeek Super-agent 的 Router/Worker 双层协议组织多任务、长任务和事件驱动的开发工作：主会话只路由，子代理隔离执行，按工单台账跟踪，只在结果可用或需要人决策时汇报。适用于一个会话有多个独立任务、需要并行子代理、等待后台任务时继续处理其他工单、跟进 PR/CI/日志事件，或用户输入 /csg 或提到 csg 时。简单单步任务不要使用。
+description: 用 DeepSeek Super-agent 的 Router/Worker 双层协议组织多任务、长任务和事件驱动的开发工作：主会话只路由，子代理隔离执行，按工单台账跟踪，只在结果可用或需要人决策时汇报。适用于一个会话有多个独立任务、需要并行子代理、等待后台任务时继续处理其他工单、跟进 PR/CI/日志事件，或用户输入 /super-agent:csg 或提到 csg 时。简单单步任务不要使用。
 ---
 
 # Super-agent 协议
@@ -15,7 +15,7 @@ description: 用 DeepSeek Super-agent 的 Router/Worker 双层协议组织多任
 
 启用：
 
-- 用户显式要求 `/csg` 或提到 csg。
+- 用户显式要求 `/super-agent:csg`（或旧写法 `/csg`）或提到 csg。
 - 同一请求包含至少 2 个可独立执行的工作项。
 - 预计有长时间任务，且期间还要处理其他工单。
 - 需要跟进 PR、CI、issue、日志等开发事件，且事件由用户消息、后台任务或 `/loop` 定时检查带入。
@@ -35,6 +35,8 @@ description: 用 DeepSeek Super-agent 的 Router/Worker 双层协议组织多任
 |---|---|
 | Router 主会话 | 当前会话。只评估、分派、汇总、对外发言 |
 | Worker 执行器 | `Agent` 子代理，优先 `super-agent-worker`，否则 `general-purpose` |
+| Worker 配最强模型（论文 2.2） | 默认 `model: inherit`＝与 Router 同模型，Router 跑轻量模型时低于论文要求，须手动在 `agents/super-agent-worker.md` 指定更强 model；`general-purpose` 回退不受该字段控制 |
+| Worker 内嵌 Subagent（论文 2.2） | 禁用；工单内子任务顺序执行。需要并行时升级为 Router 拆独立工单，不向下放行嵌套（控 token 成本与失控深度） |
 | 两级过滤 | 用户消息默认授权；外部事件先规则过滤，再判断是否行动 |
 | 订阅直通 | 台账记录 Owner 与线程；人类消息扇出给订阅工单（stopped 除外） |
 | 批处理 | 多个事件合并评估；多个工单收报合并汇报 |
@@ -98,7 +100,7 @@ stopped --> 终态
 ```
 
 - `SOURCE_KEY = <source>:<event-id或turn>:<item-index>`；单条消息多个工作项时每项一个 index。无外部 ID 用 `local:<session>:<turn>:<index>` 或 `local:<timestamp>:<index>`。
-- `REQUEST_HASH` 用 Bash 计算，不手写：`printf '%s|%s' '<单项请求，去首尾空白、连续空白压成一个>' '<目标对象路径或URL>' | sha256sum`，取前 12 位 hex。同一请求换消息重发时用于查重，不自动合并。
+- `REQUEST_HASH` 用 Bash 计算，不手写：`printf '%s|%s' '<单项请求，去首尾空白、连续空白压成一个>' '<目标对象路径或URL>' | openssl dgst -sha256 | awk '{print $NF}' | cut -c1-12`（原生 macOS 无 `sha256sum`；openssl 在 macOS/Linux 都有）。同一请求换消息重发时用于查重，不自动合并。
 - 单元格转义：`|` 写 `\|`，换行替换为空格，多值用 ` · ` 分隔（不用 `; `）。
 - blocked 工单必须把 `QUESTION`、`OPTIONS`、`DEFAULT`、`NEXT` 和最小动作写入台账；压缩后仍能继续问。
 - 仍生效的用户暂停或禁止条件（`STOP`）写入台账；压缩后仍要遵守，不能因上下文丢失而解除。
@@ -113,7 +115,7 @@ stopped --> 终态
 ```text
 TICKET: T<n>
 SOURCE_KEY: <source>:<event-id或turn>:<item-index>；无则 local:<session>:<turn>:<index>
-REQUEST_HASH: <printf '%s|%s' '<请求>' '<目标>' | sha256sum 前 12 位>
+REQUEST_HASH: <printf '%s|%s' '<请求>' '<目标>' | openssl dgst -sha256 | awk '{print $NF}' | cut -c1-12>
 SOURCE: <原始请求逐字引用 + 链接或路径>
 SCOPE: <用户明确限定的路径；无则 derive-from-source>
 CONSTRAINTS: <用户明确约束；无则写 none>
@@ -143,7 +145,6 @@ Router 只转发用户明确说的 scope 和 stop；技术范围由 Worker 判�
 - 区分用户与第三方：只有当前会话的用户可触发新工单、恢复或解除停止。线程上其他人的消息只作上下文；其超范围请求交回后记 `proposed`，问一次用户确认，不直接派工。
 - 同一线程上的新对象或扩范围请求（含用户发的），不得被 Owner 吸收；先交回，再由 Router 新建工单。
 - `stopped` 线程上的人类消息进入 Router 评估，按新候选或新工单处理，不恢复旧工单。
-- `waiting`、`awaiting_review`、`awaiting_integration` 是 open：人的消息可继续，CI/bot 只作上下文。`done`、`stopped` 不被 bot/CI 唤醒；人的后续消息可按原授权恢复 `done`。
 - 活跃 Owner：优先用 `SendMessage` 追加消息；当前构建不支持中途消息时，等 Worker 完成后再送同一工单。
 - 已结束 Owner：优先用 `SendMessage` 恢复上下文；不可用则用同一工单和原范围重派，并把台账前次状态（分支/PR/尝试/轮次）与待处理线程消息附进 `PRIOR`。
 - 多个 Owner 收到同一消息时，各自判断；冲突由 Worker 报告，Router 只转事实，不转授权。多个 Owner 对同一 `SOURCE_KEY` 交回时，合并为一个新候选，不重复建单。
