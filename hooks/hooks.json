@@ -1,0 +1,192 @@
+{
+  "description": "Super-agent protocol automation: persistent ledger, worker report ingestion, stop enforcement, event digest",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/scripts/csg.js",
+              "hook",
+              "session-start"
+            ],
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/scripts/csg.js",
+              "hook",
+              "user-prompt-submit"
+            ],
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Agent|Bash|Write|Edit|NotebookEdit|SendMessage|AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/scripts/csg.js",
+              "hook",
+              "pre-tool-use"
+            ],
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "prompt",
+            "if": "Bash(git -C *)",
+            "prompt": "你是 Bash 命令意图分类器。读取输入 JSON 中的 tool_input.command。只判断命令是否会：合并共享分支、合并 PR、发布、部署、修改生产环境。普通 git status/diff/log/add/commit/push 分支、测试、构建、lint、只读查询不算；git merge --abort/--continue/--quit/--skip 属于冲突恢复，不算。如果命令是在调用 csg-service.js（enqueue/status/list/result/approve 等），输出 {}。如果会，只输出 JSON：{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"合并或部署由 Super-agent service 统一执行；改用 /super-agent:job 提交，或让 /super-agent:service approve。\"}} 否则只输出 {}。不要解释，不要 markdown，不要代码块。输入：$ARGUMENTS",
+            "timeout": 20
+          },
+          {
+            "type": "prompt",
+            "if": "Bash(git -c *)",
+            "prompt": "你是 Bash 命令意图分类器。读取输入 JSON 中的 tool_input.command。只判断命令是否会：合并共享分支、合并 PR、发布、部署、修改生产环境。普通 git status/diff/log/add/commit/push 分支、测试、构建、lint、只读查询不算；git merge --abort/--continue/--quit/--skip 属于冲突恢复，不算。如果命令是在调用 csg-service.js（enqueue/status/list/result/approve 等），输出 {}。如果会，只输出 JSON：{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"合并或部署由 Super-agent service 统一执行；改用 /super-agent:job 提交，或让 /super-agent:service approve。\"}} 否则只输出 {}。不要解释，不要 markdown，不要代码块。输入：$ARGUMENTS",
+            "timeout": 20
+          },
+          {
+            "type": "prompt",
+            "if": "Bash(*deploy*)",
+            "prompt": "你是 Bash 命令意图分类器。读取输入 JSON 中的 tool_input.command。只判断命令是否会：合并共享分支、合并 PR、发布、部署、修改生产环境。普通 git status/diff/log/add/commit/push 分支、测试、构建、lint、只读查询不算；git merge --abort/--continue/--quit/--skip 属于冲突恢复，不算。如果命令是在调用 csg-service.js（enqueue/status/list/result/approve 等），输出 {}。如果会，只输出 JSON：{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"合并或部署由 Super-agent service 统一执行；改用 /super-agent:job 提交，或让 /super-agent:service approve。\"}} 否则只输出 {}。不要解释，不要 markdown，不要代码块。输入：$ARGUMENTS",
+            "timeout": 20
+          },
+          {
+            "type": "prompt",
+            "if": "Bash(*release*)",
+            "prompt": "你是 Bash 命令意图分类器。读取输入 JSON 中的 tool_input.command。只判断命令是否会：合并共享分支、合并 PR、发布、部署、修改生产环境。普通 git status/diff/log/add/commit/push 分支、测试、构建、lint、只读查询不算；git merge --abort/--continue/--quit/--skip 属于冲突恢复，不算。如果命令是在调用 csg-service.js（enqueue/status/list/result/approve 等），输出 {}。如果会，只输出 JSON：{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"合并或部署由 Super-agent service 统一执行；改用 /super-agent:job 提交，或让 /super-agent:service approve。\"}} 否则只输出 {}。不要解释，不要 markdown，不要代码块。输入：$ARGUMENTS",
+            "timeout": 20
+          },
+          {
+            "type": "prompt",
+            "if": "Bash(kubectl apply*)",
+            "prompt": "你是 Bash 命令意图分类器。读取输入 JSON 中的 tool_input.command。只判断命令是否会：合并共享分支、合并 PR、发布、部署、修改生产环境。普通 git status/diff/log/add/commit/push 分支、测试、构建、lint、只读查询不算；git merge --abort/--continue/--quit/--skip 属于冲突恢复，不算。如果命令是在调用 csg-service.js（enqueue/status/list/result/approve 等），输出 {}。如果会，只输出 JSON：{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"合并或部署由 Super-agent service 统一执行；改用 /super-agent:job 提交，或让 /super-agent:service approve。\"}} 否则只输出 {}。不要解释，不要 markdown，不要代码块。输入：$ARGUMENTS",
+            "timeout": 20
+          },
+          {
+            "type": "prompt",
+            "if": "Bash(kubectl rollout*)",
+            "prompt": "你是 Bash 命令意图分类器。读取输入 JSON 中的 tool_input.command。只判断命令是否会：合并共享分支、合并 PR、发布、部署、修改生产环境。普通 git status/diff/log/add/commit/push 分支、测试、构建、lint、只读查询不算；git merge --abort/--continue/--quit/--skip 属于冲突恢复，不算。如果命令是在调用 csg-service.js（enqueue/status/list/result/approve 等），输出 {}。如果会，只输出 JSON：{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"合并或部署由 Super-agent service 统一执行；改用 /super-agent:job 提交，或让 /super-agent:service approve。\"}} 否则只输出 {}。不要解释，不要 markdown，不要代码块。输入：$ARGUMENTS",
+            "timeout": 20
+          },
+          {
+            "type": "prompt",
+            "if": "Bash(helm upgrade*)",
+            "prompt": "你是 Bash 命令意图分类器。读取输入 JSON 中的 tool_input.command。只判断命令是否会：合并共享分支、合并 PR、发布、部署、修改生产环境。普通 git status/diff/log/add/commit/push 分支、测试、构建、lint、只读查询不算；git merge --abort/--continue/--quit/--skip 属于冲突恢复，不算。如果命令是在调用 csg-service.js（enqueue/status/list/result/approve 等），输出 {}。如果会，只输出 JSON：{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"合并或部署由 Super-agent service 统一执行；改用 /super-agent:job 提交，或让 /super-agent:service approve。\"}} 否则只输出 {}。不要解释，不要 markdown，不要代码块。输入：$ARGUMENTS",
+            "timeout": 20
+          },
+          {
+            "type": "prompt",
+            "if": "Bash(terraform apply*)",
+            "prompt": "你是 Bash 命令意图分类器。读取输入 JSON 中的 tool_input.command。只判断命令是否会：合并共享分支、合并 PR、发布、部署、修改生产环境。普通 git status/diff/log/add/commit/push 分支、测试、构建、lint、只读查询不算；git merge --abort/--continue/--quit/--skip 属于冲突恢复，不算。如果命令是在调用 csg-service.js（enqueue/status/list/result/approve 等），输出 {}。如果会，只输出 JSON：{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"合并或部署由 Super-agent service 统一执行；改用 /super-agent:job 提交，或让 /super-agent:service approve。\"}} 否则只输出 {}。不要解释，不要 markdown，不要代码块。输入：$ARGUMENTS",
+            "timeout": 20
+          },
+          {
+            "type": "prompt",
+            "if": "Bash(ansible-playbook*)",
+            "prompt": "你是 Bash 命令意图分类器。读取输入 JSON 中的 tool_input.command。只判断命令是否会：合并共享分支、合并 PR、发布、部署、修改生产环境。普通 git status/diff/log/add/commit/push 分支、测试、构建、lint、只读查询不算；git merge --abort/--continue/--quit/--skip 属于冲突恢复，不算。如果命令是在调用 csg-service.js（enqueue/status/list/result/approve 等），输出 {}。如果会，只输出 JSON：{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"合并或部署由 Super-agent service 统一执行；改用 /super-agent:job 提交，或让 /super-agent:service approve。\"}} 否则只输出 {}。不要解释，不要 markdown，不要代码块。输入：$ARGUMENTS",
+            "timeout": 20
+          },
+          {
+            "type": "prompt",
+            "if": "Bash(docker push*)",
+            "prompt": "你是 Bash 命令意图分类器。读取输入 JSON 中的 tool_input.command。只判断命令是否会：合并共享分支、合并 PR、发布、部署、修改生产环境。普通 git status/diff/log/add/commit/push 分支、测试、构建、lint、只读查询不算；git merge --abort/--continue/--quit/--skip 属于冲突恢复，不算。如果命令是在调用 csg-service.js（enqueue/status/list/result/approve 等），输出 {}。如果会，只输出 JSON：{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"合并或部署由 Super-agent service 统一执行；改用 /super-agent:job 提交，或让 /super-agent:service approve。\"}} 否则只输出 {}。不要解释，不要 markdown，不要代码块。输入：$ARGUMENTS",
+            "timeout": 20
+          },
+          {
+            "type": "prompt",
+            "if": "Bash(docker compose up*)",
+            "prompt": "你是 Bash 命令意图分类器。读取输入 JSON 中的 tool_input.command。只判断命令是否会：合并共享分支、合并 PR、发布、部署、修改生产环境。普通 git status/diff/log/add/commit/push 分支、测试、构建、lint、只读查询不算；git merge --abort/--continue/--quit/--skip 属于冲突恢复，不算。如果命令是在调用 csg-service.js（enqueue/status/list/result/approve 等），输出 {}。如果会，只输出 JSON：{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"合并或部署由 Super-agent service 统一执行；改用 /super-agent:job 提交，或让 /super-agent:service approve。\"}} 否则只输出 {}。不要解释，不要 markdown，不要代码块。输入：$ARGUMENTS",
+            "timeout": 20
+          },
+          {
+            "type": "prompt",
+            "if": "Bash(gh workflow run*)",
+            "prompt": "你是 Bash 命令意图分类器。读取输入 JSON 中的 tool_input.command。只判断命令是否会：合并共享分支、合并 PR、发布、部署、修改生产环境。普通 git status/diff/log/add/commit/push 分支、测试、构建、lint、只读查询不算；git merge --abort/--continue/--quit/--skip 属于冲突恢复，不算。如果命令是在调用 csg-service.js（enqueue/status/list/result/approve 等），输出 {}。如果会，只输出 JSON：{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"合并或部署由 Super-agent service 统一执行；改用 /super-agent:job 提交，或让 /super-agent:service approve。\"}} 否则只输出 {}。不要解释，不要 markdown，不要代码块。输入：$ARGUMENTS",
+            "timeout": 20
+          },
+          {
+            "type": "prompt",
+            "if": "Bash(gh release create*)",
+            "prompt": "你是 Bash 命令意图分类器。读取输入 JSON 中的 tool_input.command。只判断命令是否会：合并共享分支、合并 PR、发布、部署、修改生产环境。普通 git status/diff/log/add/commit/push 分支、测试、构建、lint、只读查询不算；git merge --abort/--continue/--quit/--skip 属于冲突恢复，不算。如果命令是在调用 csg-service.js（enqueue/status/list/result/approve 等），输出 {}。如果会，只输出 JSON：{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"合并或部署由 Super-agent service 统一执行；改用 /super-agent:job 提交，或让 /super-agent:service approve。\"}} 否则只输出 {}。不要解释，不要 markdown，不要代码块。输入：$ARGUMENTS",
+            "timeout": 20
+          },
+          {
+            "type": "prompt",
+            "if": "Bash(ssh *)",
+            "prompt": "你是 Bash 命令意图分类器。读取输入 JSON 中的 tool_input.command。只判断命令是否会：合并共享分支、合并 PR、发布、部署、修改生产环境。普通 git status/diff/log/add/commit/push 分支、测试、构建、lint、只读查询不算；git merge --abort/--continue/--quit/--skip 属于冲突恢复，不算。如果命令是在调用 csg-service.js（enqueue/status/list/result/approve 等），输出 {}。如果会，只输出 JSON：{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"合并或部署由 Super-agent service 统一执行；改用 /super-agent:job 提交，或让 /super-agent:service approve。\"}} 否则只输出 {}。不要解释，不要 markdown，不要代码块。输入：$ARGUMENTS",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Agent|SubagentHandback",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/scripts/csg.js",
+              "hook",
+              "post-tool-use"
+            ],
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/scripts/csg.js",
+              "hook",
+              "subagent-stop"
+            ],
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/scripts/csg.js",
+              "hook",
+              "pre-compact"
+            ],
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

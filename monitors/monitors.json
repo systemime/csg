@@ -1,0 +1,8 @@
+[
+  {
+    "name": "csg-events",
+    "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/csg.js\" monitor",
+    "description": "Super-agent: watch ledger PR/CI subscriptions and print state changes into the session",
+    "when": "always"
+  }
+]

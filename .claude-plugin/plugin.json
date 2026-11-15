@@ -1,9 +1,26 @@
 {
   "name": "super-agent",
-  "version": "0.1.1",
-  "description": "DeepSeek Super-agent Router/Worker 协议：主会话只路由，子代理按工单隔离执行，事件驱动、台账跟踪、只在结果可用或需要决策时汇报。",
+  "version": "0.3.0",
+  "displayName": "Super-agent",
+  "description": "Router/Worker 双层协议插件：主会话只路由和汇报，Worker、Verifier、Tester、Deployer、Integrator 按工单隔离执行；CLI 台账、hooks 自动落盘与停止拦截、确定性 service 队列、PR/CI 监控、10 个命令。",
   "author": {
     "name": "OwO"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "keywords": [
+    "super-agent",
+    "router-worker",
+    "claude-code",
+    "multi-agent",
+    "ledger",
+    "tickets",
+    "monitoring",
+    "job-queue",
+    "deploy"
+  ],
+  "repository": "https://github.com/systemime/csg",
+  "homepage": "https://github.com/systemime/csg",
+  "experimental": {
+    "monitors": "./monitors/monitors.json"
+  }
 }
