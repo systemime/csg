@@ -230,14 +230,24 @@ Windows 的计划任务通过 `install-windows.ps1` 注册；生成文件里写�
 
 ## 与论文的差异
 
-- **事件监听仍随会话**：PR/CI 事件由会话内 monitor 带入；merge/deploy/test 由确定性 service 常驻执行，service 不做事件监听。
-- **service 不是通用命令执行器**：只运行配置允许列表里的测试、合并目标和部署命令，不执行 job 里的任意 shell。
-- **没有跨设备存算分离**：台账、子代理和 service 都在本机。
-- **Watchdog 只读**：出现异常时只给建议，不自动改提示词或规则。
-- **monitor 只在交互会话生效**：会话关闭期间不监听；重新打开后，monitor 再次运行时才查询当前状态。
-- **`gh` 是可选依赖**：没有它也能用台账、hooks 和子代理，只是不能查 PR/CI。
-- **Worker 的嵌套范围更窄**：只允许再派只读 Verifier 做独立复核，不能派其他 Worker 或通用代理；需要并行时由 Router 拆成新工单。
-- **observe 模式不派 Worker**：只记录建议，不派 Worker、不改代码；用户明确要求执行时先切回 `active`。
+论文主线是 Router/Worker 双层：Router 只路由，Worker 隔离执行。当前实现保留这条主线，但把执行拆成两层：LLM 角色代理负责调查、实现、复核和诊断；确定性 service 负责合并、部署、测试。service 是论文没有的执行层，不取代 Router/Worker，只承接可确定的动作。
+
+| 论文机制 | 当前实现 | 差异 |
+|---|---|---|
+| Router/Worker 双层 | Router 主会话 + Worker、Verifier、Tester、Deployer、Integrator | 角色更细；service 是新增执行层 |
+| 常驻事件守护进程 | monitor 随交互会话运行；service 常驻但不监听 PR/CI | 会话关闭后不监听外部事件；事件由用户消息、后台任务、monitor 带入 |
+| 订阅直通 | `watch` 记录 PR/分支/CI，monitor 打印变化并写入事件 | 没有聊天线程、issue 的常驻订阅；只覆盖 PR/CI 和 service 结果 |
+| 两级过滤、批处理 | `SessionStart`、`UserPromptSubmit` 注入未确认事件；monitor 按状态变化去重 | 没有独立进程消费所有外部事件；依赖会话触发 |
+| 状态/环境分离 | 台账和 service 队列落盘；写操作用 worktree 隔离 | 同机运行；没有跨设备存算分离 |
+| Watchdog | Router 自检 + 只读 Verifier；阈值写进 SKILL | 只读，不改提示词或规则，不会自动修复 |
+| Worker 内嵌 Subagent | Worker 只能再派只读 Verifier | 比论文窄；为控制成本和失控深度 |
+| Inline & Spill、Chain of Recall | 摘要内联，长内容落 `artifacts/`，工单 ID 可追到产物 | 基本保留；service job 结果也落盘 |
+| 异步 ReAct、投机执行 | 子代理默认后台；`SendMessage` 恢复；可提前派只读调查 | 没有常驻事件循环；后台完成通知唤醒 |
+| accept mode | `mode observe` / `active`；`PreToolUse` 阻止越权派工 | observe 只记录建议，不执行 |
+| 人工审批 | deploy 默认需要 `approve`；PR 合并需显式 `allowPrMerge`；主会话 merge/deploy 也拦截 | 审批边界比论文更严格；service 只执行允许列表里的命令 |
+| 角色分工 | tester、integrator、deployer 分开；service 串行合并/部署 | 新增，不是论文原始双层结构 |
+
+总体：协议主干保留，新增确定性 service 和角色分工；事件监听仍受会话限制，跨设备状态分离和可修改规则的 Watchdog 没做。
 
 ## 依赖
 
